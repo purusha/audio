@@ -1,0 +1,4 @@
+$> arecord -d5 test.wav
+$> aplay test.wav
+$> xxd test.wav
+
