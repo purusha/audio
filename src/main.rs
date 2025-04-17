@@ -1,11 +1,19 @@
+//mod stt;
+
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound::{WavWriter, WavSpec};
 use std::fs::File;
 use std::io::BufWriter;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use chrono::Local;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let date = Local::now();
+    let formatted_date = date.format("%d-%m-%Y").to_string(); // Formato gg-mm-yyyy
+    let file_name = format!("{}.wav", formatted_date);
+
     let host = cpal::default_host();
     let device = host.default_input_device().expect("Nessun microfono trovato");
     let config = device.default_input_config()?;
@@ -19,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let writer = Arc::new(Mutex::new(WavWriter::new(
-        BufWriter::new(File::create("registrazione.wav")?),
+        BufWriter::new(File::create(&file_name)?),
         spec,
     )?));
 
@@ -49,8 +57,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     stream.play()?;
     std::thread::sleep(Duration::from_secs(5));
-
     drop(stream);
+
     if let Ok(writer) = Arc::try_unwrap(writer) {
         let writer = writer.into_inner().unwrap();
         writer.finalize()?;
@@ -58,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Errore nel chiudere il writer");
     }
 
-    println!("Registrazione terminata. File salvato: registrazione.wav");
+    println!("Registrazione terminata. File salvato: {}", &file_name);
     Ok(())
 }
 
